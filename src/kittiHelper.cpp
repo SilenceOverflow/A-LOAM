@@ -50,22 +50,22 @@ int main(int argc, char** argv)
     n.getParam("publish_delay", publish_delay);
     publish_delay = publish_delay <= 0 ? 1 : publish_delay;
 
-    ros::Publisher pub_laser_cloud = n.advertise<sensor_msgs::PointCloud2>("/velodyne_points", 2);
+    ros::Publisher pub_laser_cloud = n.advertise<sensor_msgs::PointCloud2>("velodyne_points", 2);
 
     image_transport::ImageTransport it(n);
-    image_transport::Publisher pub_image_left = it.advertise("/image_left", 2);
-    image_transport::Publisher pub_image_right = it.advertise("/image_right", 2);
+    image_transport::Publisher pub_image_left = it.advertise("image_left", 2);
+    image_transport::Publisher pub_image_right = it.advertise("image_right", 2);
 
-    ros::Publisher pubOdomGT = n.advertise<nav_msgs::Odometry> ("/odometry_gt", 5);
+    ros::Publisher pubOdomGT = n.advertise<nav_msgs::Odometry> ("odometry_gt", 5);
     nav_msgs::Odometry odomGT;
-    odomGT.header.frame_id = "/camera_init";
-    odomGT.child_frame_id = "/ground_truth";
+    odomGT.header.frame_id = "camera_init";
+    odomGT.child_frame_id = "ground_truth";
 
-    ros::Publisher pubPathGT = n.advertise<nav_msgs::Path> ("/path_gt", 5);
+    ros::Publisher pubPathGT = n.advertise<nav_msgs::Path> ("path_gt", 5);
     nav_msgs::Path pathGT;
-    pathGT.header.frame_id = "/camera_init";
+    pathGT.header.frame_id = "camera_init";
 
-    std::string timestamp_path = "sequences/" + sequence_number + "/times.txt";
+    std::string timestamp_path = "sequences/" + sequence_number + "times.txt";
     std::ifstream timestamp_file(dataset_folder + timestamp_path, std::ifstream::in);
 
     std::string ground_truth_path = "results/" + sequence_number + ".txt";
@@ -87,10 +87,10 @@ int main(int argc, char** argv)
     {
         float timestamp = stof(line);
         std::stringstream left_image_path, right_image_path;
-        left_image_path << dataset_folder << "sequences/" + sequence_number + "/image_0/" << std::setfill('0') << std::setw(6) << line_num << ".png";
-        cv::Mat left_image = cv::imread(left_image_path.str(), CV_LOAD_IMAGE_GRAYSCALE);
-        right_image_path << dataset_folder << "sequences/" + sequence_number + "/image_1/" << std::setfill('0') << std::setw(6) << line_num << ".png";
-        cv::Mat right_image = cv::imread(left_image_path.str(), CV_LOAD_IMAGE_GRAYSCALE);
+        left_image_path << dataset_folder << "sequences/" + sequence_number + "image_0/" << std::setfill('0') << std::setw(6) << line_num << ".png";
+        cv::Mat left_image = cv::imread(left_image_path.str(), cv::IMREAD_GRAYSCALE);
+        right_image_path << dataset_folder << "sequences/" + sequence_number + "image_1/" << std::setfill('0') << std::setw(6) << line_num << ".png";
+        cv::Mat right_image = cv::imread(left_image_path.str(), cv::IMREAD_GRAYSCALE);
 
         std::getline(ground_truth_file, line);
         std::stringstream pose_stream(line);
@@ -129,7 +129,7 @@ int main(int argc, char** argv)
 
         // read lidar point cloud
         std::stringstream lidar_data_path;
-        lidar_data_path << dataset_folder << "velodyne/sequences/" + sequence_number + "/velodyne/" 
+        lidar_data_path << dataset_folder << "velodyne/sequences/" + sequence_number + "velodyne/" 
                         << std::setfill('0') << std::setw(6) << line_num << ".bin";
         std::vector<float> lidar_data = read_lidar_data(lidar_data_path.str());
         std::cout << "totally " << lidar_data.size() / 4.0 << " points in this lidar frame \n";
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
         sensor_msgs::PointCloud2 laser_cloud_msg;
         pcl::toROSMsg(laser_cloud, laser_cloud_msg);
         laser_cloud_msg.header.stamp = ros::Time().fromSec(timestamp);
-        laser_cloud_msg.header.frame_id = "/camera_init";
+        laser_cloud_msg.header.frame_id = "camera_init";
         pub_laser_cloud.publish(laser_cloud_msg);
 
         sensor_msgs::ImagePtr image_left_msg = cv_bridge::CvImage(laser_cloud_msg.header, "mono8", left_image).toImageMsg();
@@ -163,11 +163,11 @@ int main(int argc, char** argv)
 
         if (to_bag)
         {
-            bag_out.write("/image_left", ros::Time::now(), image_left_msg);
-            bag_out.write("/image_right", ros::Time::now(), image_right_msg);
-            bag_out.write("/velodyne_points", ros::Time::now(), laser_cloud_msg);
-            bag_out.write("/path_gt", ros::Time::now(), pathGT);
-            bag_out.write("/odometry_gt", ros::Time::now(), odomGT);
+            bag_out.write("image_left", ros::Time::now(), image_left_msg);
+            bag_out.write("image_right", ros::Time::now(), image_right_msg);
+            bag_out.write("velodyne_points", ros::Time::now(), laser_cloud_msg);
+            bag_out.write("path_gt", ros::Time::now(), pathGT);
+            bag_out.write("odometry_gt", ros::Time::now(), odomGT);
         }
 
         line_num ++;
